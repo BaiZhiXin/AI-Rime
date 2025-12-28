@@ -1,2 +1,126 @@
 # AI-Rime
 基于Rime的lua脚本系统打造AI增强输入法
+
+
+![](https://ulln.top:8890/s/N2WAw6rcs7LsMEr/preview)
+
+![](https://ulln.top:8890/s/YKeG2dETmss23Hq/preview)
+
+# Rime AI 纠错 v1 智能纠错
+
+## 功能说明
+
+极简版 AI 纠错功能：
+- 按 **6** 触发纠错，显示"AI纠正中..."
+- 再按 **6** 显示纠正结果
+
+## 文件清单
+
+| 文件 | 说明 |
+|------|------|
+| `ai_corrector_processor.lua` | 按键监听（放入 `lua/` 目录） |
+| `ai_corrector.lua` | 候选词处理（放入 `lua/` 目录） |
+| `ai_corrector_service*` | 后台服务 |
+
+# 前言
+
+Lua 是一种轻量小巧的脚本语言，用标准C语言编写并以源代码形式开放， 其设计目的是为了嵌入应用程序中，从而为应用程序提供灵活的扩展和定制功能。
+
+Rime输入法支持内置简单的Lua脚本，基于此得以设计AI输入法。
+
+Rime的配置文件夹结构大致如下：
+
+**Rime**
+
+- Lua——存放lua脚本
+- build——存放构建后的信息
+- *.userdb——存放用户输入习惯的记录
+- *_dicts——存放引入的词典
+- 其他配置文件
+
+## 安装步骤
+
+### 1. 程序文件部署
+
+当前版本总共需要部署三个程序，分别是两个lua程序以及一个可执行程序。
+
+Rime输入法配置文件可通过Rime输入法菜单打开，Mac端叫作`用户设定`，Windows端叫作`用户文件夹`。Mac下Rime用户资料默认在`Users/用户名/Library/Rime`下，可直接在`README.md`所在目录打开终端执行下面命令进行复制。
+
+```bash
+cp ai_corrector_processor.lua ~/Library/Rime/lua/
+cp ai_corrector.lua ~/Library/Rime/lua/
+```
+
+Windows端Rime用户文件夹默认路径是`C:\Users\用户名\AppData\Roaming\Rime`，Linux平台输入框架和版本不同则具体的也会目录不同，需要根据系统是fictx4、fictx5或iBus来定。
+
+将不同平台对应的可执行程序复制到Rime配置文件的根目录下。
+
+### 2. 配置 Rime Schema
+
+在你的输入方案的schema（例如雾凇拼音rime_ice.schema.yaml文件）中添加：
+```yaml
+engine:
+  processors:
+    - lua_processor@*ai_corrector_processor	# 尽量放在processors前面，以免被其他processor抢先捕获
+  filters:
+    - lua_filter@*ai_corrector	# 这一条必须放在filters的第一个位置，用于修改AI纠正结果显示
+```
+
+或者在输入方案的custom文件中添加：
+
+```yaml
+patch:	# 更推荐这种添加方案，不影响原有配置文件
+  engine/processors/@after 0: lua_processor@*ai_corrector_processor
+  engine/filters/@before last: lua_filter@*ai_corrector
+```
+
+例如对雾凇拼音的`rime_ice.shcema.yaml`配置文件创建一个`rime_ice.custom.yaml`文件，然后添加上面的`patch内容`。
+
+### 3. 启动服务
+
+- Windows平台在Rime根目录下打开PowerShell，执行命令开启服务，终端会显示纠错请求信息。Windows平台可以利用nssm制作后台服务（注意工作目录设置成Rime配置文件根目录）。
+  ```shell
+  ./ai_corrector_service_Windows/ai_corrector_service.exe
+  ```
+
+- Linux平台同样在Rime配置根目录打开终端，执行命令启动服务。
+  ````shell
+  ./ai_corrector_service_Linux/ai_corrector_service.bin
+  ````
+
+  如果启动失败的话检查权限是否正确，通过命令赋予运行权限。
+  ```shell
+  chmod +x ./ai_corrector_service_Linux/ai_corrector_service.bin
+  ```
+
+  Linux可用systemd设置成服务后台运行，直接执行bin文件即可，建议设置工作目录是Rime配置文件根目录。
+
+- Mac平台将`ai_corrector_service_Mac.app`放置在Rime配置文件根目录后**不可以**直接双击运行，因为服务程序没有UI，因此同样需要在Rime配置文件根目录打开终端执行命令：
+  ```shell
+  ./ai_corrector_service_Mac.app/Contents/MacOS/ai_corrector_service
+  ```
+
+​	Mac电脑可用launched设置成服务后台运行。
+
+### 4. 重新部署 Rime
+
+## 使用方法
+
+本方案是基于雾凇拼音输入方案而设计的，其他拼音方案同样可用。雾凇拼音默认设置5个候选词，因此我将数字键6作为了触发纠错功能的触发按键。
+
+上面部署阶段成功后，具体的操作流程如下：
+
+1. 输入拼音，看到候选词
+2. 按 **6** 触发纠错
+3. 再按 **6** 显示结果
+4. 按 **空格** 选择结果
+
+**结束语：**
+
+因为Rime本身的设计，lua脚本只能在输入发生变动时触发，因此该版本需要先按数字键6触发AI纠错请求，等1-2s后再按6触发AI返回结果显示。等待按第二次键很是恼人，目前已经在设计第二版本，期望可以解决避免需要二次按键触发的问题。
+
+当前版本prompt提示词经过数百次尝试优化，已经达到较好的效果。如果关注较多的话考虑下一版本公开提示词，到时候可以自定义做更多花样。
+
+博主自费购买了123盘的直链流量，将资源放在123盘以供下载，不需要登录，也不会限速。喜欢的可以点个赞关注一波。
+
+https://1815368419.v.123pan.cn/1815368419/26934630
