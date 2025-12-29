@@ -202,3 +202,123 @@ https://1815368419.v.123pan.cn/1815368419/26934630
 资源链接：
 
 https://1815368419.v.123pan.cn/1815368419/26963692
+
+
+
+# V2-Linux修复版本
+
+**前言：**
+
+- 由于Linux系统输入法框架的设计，首发v2版本出现配置文件找错目录的问题，现已经经过修改和测试，在作者Ubuntu24 x11系统上已经可以正常运行，如若在其他发行版上出现问题请及时反馈。
+
+- v2版本是基于python的pynput模块实现发送模拟按键0来代替用户第二次按键触发直接修改输入法第一个候选词显示为AI返回结果的，但是优于Linux下x11和Wayland对pynput支持较差，因此此次修复版本针对这一问题做出了深度修复与测试。作者Ubuntu24 x11环境下可以实现正常纠错及自动触发，优于作者设备有限，没能测试Wayland，因此下面给出x11的实际可行配置策略及Wayland理论可行配置策略。
+
+
+
+# Linux 模拟按键配置指南
+
+本文档说明在 Linux 环境下配置 AI 纠错服务自动触发功能所需的依赖和设置。
+
+## 问题背景
+
+Python 的 `pynput` 库在 Linux 下存在以下问题：
+
+- **X11**：需要额外权限配置，且不够稳定
+- **Wayland**：静默失败，无法正常工作
+
+因此，在 Linux 下程序**跳过 pynput**，改用系统工具。
+
+---
+
+## 环境检测
+
+程序通过环境变量 `XDG_SESSION_TYPE` 自动检测当前桌面环境：
+
+```bash
+echo $XDG_SESSION_TYPE
+# 输出 "x11" 或 "wayland"
+```
+
+---
+
+## X11 环境
+
+### 使用工具：xdotool
+
+### 安装
+
+```bash
+# Ubuntu/Debian
+sudo apt install xdotool
+
+# Fedora
+sudo dnf install xdotool
+
+# Arch
+sudo pacman -S xdotool
+```
+
+### 测试
+
+```bash
+xdotool key 0
+```
+
+### 无需额外配置
+
+X11 下 xdotool 开箱即用，无需守护进程或特殊权限。
+
+---
+
+## Wayland 环境
+
+### 使用工具：ydotool
+
+### 安装
+
+```bash
+# Ubuntu/Debian
+sudo apt install ydotool
+
+# Fedora
+sudo dnf install ydotool
+
+# Arch
+sudo pacman -S ydotool
+```
+
+### 启动守护进程
+
+ydotool 需要后台运行 `ydotoold` 守护进程：
+
+```bash
+# 手动启动
+sudo ydotoold &
+
+# 或使用 systemd（推荐）
+sudo systemctl enable ydotool
+sudo systemctl start ydotool
+```
+
+### 用户权限
+
+将用户添加到 `input` 组：
+
+```bash
+sudo usermod -aG input $USER
+# 注销并重新登录生效
+```
+
+### 测试
+
+```bash
+# 数字 0 的 Linux 内核键码是 11
+# 格式：keycode:1 (按下) keycode:0 (释放)
+ydotool key 11:1 11:0
+```
+
+---
+
+**结语：**以上是针对Linux用户需要特殊配置的说明，若有其他问题请即时反馈。
+
+资源链接：https://1815368419.v.123pan.cn/1815368419/26969029
