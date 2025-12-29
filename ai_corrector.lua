@@ -1,11 +1,9 @@
 --[[
-    Rime AI 纠错 Filter (v1 基础版)
+    Rime AI 纠错 Filter (v2 可配置版)
     
     功能：检测触发，发送纠错请求，显示结果
-    
-    工作流程：
-    1. 按 6 触发，发送请求给 Python 服务
-    2. 再按 6，显示 AI 返回的纠正结果
+    - 按 6 触发纠错
+    - 按 0 或 Python 自动发送按键显示结果
 --]]
 
 local M = {}
@@ -33,6 +31,7 @@ local RESP_FILE = TEMP_DIR .. SEP .. "rime_ai_response.txt"
 local STATUS_FILE = TEMP_DIR .. SEP .. "rime_ai_status.txt"
 local REQID_FILE = TEMP_DIR .. SEP .. "rime_ai_reqid.txt"
 local PINYIN_FILE = TEMP_DIR .. SEP .. "rime_ai_pinyin.txt"
+local TYPE_FILE = TEMP_DIR .. SEP .. "rime_ai_type.txt"
 local TRIGGER_FLAG = TEMP_DIR .. SEP .. "rime_ai_trigger"
 
 -- 读取文件
@@ -112,9 +111,11 @@ local function check_trigger()
     if trigger and trigger ~= last_trigger then
         last_trigger = trigger
         delete_file(TRIGGER_FLAG)
-        return true
+        
+        local func_type = read_file(TYPE_FILE) or "correct"
+        return true, func_type
     end
-    return false
+    return false, nil
 end
 
 function M.func(input, env)
@@ -122,7 +123,7 @@ function M.func(input, env)
     local preedit = context.input or ""
     
     -- 检查触发
-    local is_triggered = check_trigger()
+    local is_triggered, func_type = check_trigger()
     
     -- preedit 变化时清除任务
     if original_preedit and preedit ~= original_preedit then
@@ -167,7 +168,19 @@ function M.func(input, env)
     
     -- 触发处理
     if is_triggered and selected_cand then
-        if pending_result and #pending_result > 0 then
+        -- show_result 类型：只显示结果
+        if func_type == "show_result" then
+            if pending_result and #pending_result > 0 then
+                local seg_start = candidates[1].start
+                local seg_end = candidates[1]._end
+                
+                local result_cand = Candidate("ai", seg_start, seg_end, pending_result, "「AI」")
+                result_cand.quality = 10000
+                yield(result_cand)
+                
+                pending_result = nil
+            end
+        elseif pending_result and #pending_result > 0 then
             -- 已有结果，显示它
             local seg_start = candidates[1].start
             local seg_end = candidates[1]._end
@@ -186,6 +199,7 @@ function M.func(input, env)
             local full_pinyin = selected_cand.preedit or selected_cand.comment or preedit
             
             write_file(REQID_FILE, current_request_id)
+            write_file(TYPE_FILE, "correct")
             write_file(REQ_FILE, selected_cand.text)
             write_file(PINYIN_FILE, full_pinyin)
             write_file(STATUS_FILE, "req")

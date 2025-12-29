@@ -1,21 +1,20 @@
 --[[
-    Rime AI 纠错 Processor (v1 基础版)
+    Rime AI 纠错 Processor (v2 可配置版)
     
-    功能：监听按键 6 触发纠错和显示结果
-    
-    使用方法：
-    1. 输入拼音，候选词出现
-    2. 按 6 触发 AI 纠错
-    3. 再按 6 显示纠错结果
+    功能：监听功能键触发纠错
+    - 按 6 触发纠错
+    - 按 0 显示结果（或 Python 自动发送）
 --]]
 
 local M = {}
 
 -- ============================================================
--- 【核心配置】仅监听按键 6
+-- 【用户配置区】可修改以下设置
 -- ============================================================
 
-local TRIGGER_KEY = "6"  -- 触发/显示结果按键
+-- 功能键配置
+local KEY_CORRECT = "6"      -- 触发纠错
+local KEY_SHOW_RESULT = "0"  -- 显示结果
 
 -- ============================================================
 -- 以下为核心代码，一般无需修改
@@ -40,6 +39,7 @@ os.execute("mkdir \"" .. TEMP_DIR .. "\" 2>nul")
 
 -- 文件路径
 local TRIGGER_FLAG = TEMP_DIR .. SEP .. "rime_ai_trigger"
+local TYPE_FILE = TEMP_DIR .. SEP .. "rime_ai_type.txt"
 local LOADING_FILE = TEMP_DIR .. SEP .. "rime_ai_loading.txt"
 
 -- 写入文件
@@ -66,17 +66,24 @@ function M.func(key, env)
     
     local key_repr = key:repr()
     
-    -- 检查是否按下触发键
-    if key_repr == TRIGGER_KEY and context:has_menu() then
-        -- 写入加载文本
+    if not context:has_menu() then
+        return 2  -- kNoop
+    end
+    
+    -- 纠错触发
+    if key_repr == KEY_CORRECT then
+        write_file(TYPE_FILE, "correct")
         write_file(LOADING_FILE, "AI纠正中...")
-        
-        -- 设置触发标志
         write_file(TRIGGER_FLAG, tostring(os.time()) .. "_correct")
-        
-        -- 刷新候选列表
         context:refresh_non_confirmed_composition()
-        
+        return 1  -- kAccepted
+    end
+    
+    -- 显示结果
+    if key_repr == KEY_SHOW_RESULT then
+        write_file(TYPE_FILE, "show_result")
+        write_file(TRIGGER_FLAG, tostring(os.time()) .. "_show")
+        context:refresh_non_confirmed_composition()
         return 1  -- kAccepted
     end
     
