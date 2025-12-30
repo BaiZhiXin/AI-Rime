@@ -1,3 +1,5 @@
+# 当前Windows版本存在问题，不要尝试部署
+
 # AI-Rime
 基于Rime的lua脚本系统打造AI增强输入法
 
