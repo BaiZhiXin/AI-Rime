@@ -96,7 +96,17 @@ patch:
 
 **Windows系统下**把下载的可执行程序和配置文件（建议用上配置文件，填入自己的apikey）扔在电脑的任意角落启动即可。若用配置文件可直接放在可执行程序同级目录。
 
-**Mac及Linux系统下**建议通过终端添加`--config 配置文件地址`的形式启动。
+**Mac及Linux系统下**建议通过终端添加`--config 配置文件地址`的形式启动：
+
+```shell
+# Mac
+./bzx_service.app/Contents/MacOS/bzx_service --config ./bzx_config.json
+
+# Linux
+./bzx_service.bin --config ./bzx_config.json
+```
+
+
 
 
 
