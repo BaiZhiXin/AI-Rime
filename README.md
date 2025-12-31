@@ -10,17 +10,17 @@ AI-Rime是一个基于Rime开源输入法框架打造的AI增强解决方案。�
 
 项目主要利用Rime内置的lua脚本实现，lua脚本本身不支持网络操作，用户必须启动服务程序用于请求AI响应。
 
-
-
-![](../../../Seafile/MarkDownNote/Assets/preview-20251231195645776.png)
-
-
-
-![](../../../Seafile/MarkDownNote/Assets/preview-20251231195654004.png)
+![](https://ulln.top:8890/s/xS2yYPWQAcSK9Pk/preview)
 
 
 
-![](../../../Seafile/MarkDownNote/Assets/preview-20251231195659113.png)
+![](https://ulln.top:8890/s/ZoRRHHXLrgxe7ZA/preview)
+
+
+
+![](https://ulln.top:8890/s/enZStLTsDzFyQ7H/preview)
+
+
 
 ## V3版本全面升级，指尖AI亦是如此
 
@@ -230,9 +230,7 @@ X11 下 xdotool 开箱即用，无需守护进程或特殊权限。
 
 
 
-
-
-![](../../../Seafile/MarkDownNote/Assets/preview-20251231195528281.png)
+![](https://ulln.top:8890/s/wr2Y5Ma2MBNNmJC/preview)
 
 ![](https://ulln.top:8890/s/YKeG2dETmss23Hq/preview)
 
